@@ -119,7 +119,9 @@ fn signature_to_json(s: &MessageSignature) -> Json {
 }
 
 fn recipient_from_json(v: &Json) -> Result<MessageRecipient> {
-    let m = v.as_object().ok_or_else(|| BottleError::Json("recipient".into()))?;
+    let m = v
+        .as_object()
+        .ok_or_else(|| BottleError::Json("recipient".into()))?;
     Ok(MessageRecipient {
         typ: m.get("typ").and_then(Json::as_i64).unwrap_or(0),
         recipient: unb64(str_field(m, "key")?)?,
@@ -128,7 +130,9 @@ fn recipient_from_json(v: &Json) -> Result<MessageRecipient> {
 }
 
 fn signature_from_json(v: &Json) -> Result<MessageSignature> {
-    let m = v.as_object().ok_or_else(|| BottleError::Json("signature".into()))?;
+    let m = v
+        .as_object()
+        .ok_or_else(|| BottleError::Json("signature".into()))?;
     Ok(MessageSignature {
         typ: m.get("typ").and_then(Json::as_i64).unwrap_or(0),
         signer: unb64(str_field(m, "key")?)?,
@@ -165,12 +169,17 @@ fn cbor_value_to_json(v: &Value) -> Result<Json> {
         Value::Null => Json::Null,
         Value::Bool(b) => Json::Bool(*b),
         Value::Integer(i) => Json::from(i128::from(*i) as i64),
-        Value::Float(f) => serde_json::Number::from_f64(*f).map(Json::Number).unwrap_or(Json::Null),
+        Value::Float(f) => serde_json::Number::from_f64(*f)
+            .map(Json::Number)
+            .unwrap_or(Json::Null),
         Value::Text(t) => Json::String(t.clone()),
         Value::Bytes(b) => Json::String(b64(b)),
-        Value::Array(items) => {
-            Json::Array(items.iter().map(cbor_value_to_json).collect::<Result<_>>()?)
-        }
+        Value::Array(items) => Json::Array(
+            items
+                .iter()
+                .map(cbor_value_to_json)
+                .collect::<Result<_>>()?,
+        ),
         Value::Map(entries) => {
             let mut m = Map::new();
             for (k, val) in entries {

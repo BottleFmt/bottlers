@@ -12,7 +12,8 @@ fn b64(s: &str) -> Vec<u8> {
 }
 
 const SIGNED_EMPTY_HEADER: &str = "haBYGU1lc3NhZ2Ugd2l0aCBlbXB0eSBoZWFkZXIA9oGDAFhbMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE09oIghTDnluvtv0+NKMhTS2nfC3TzR4DWnZK7czzFPZSH6bJN5oMZCp5X7pfI4BbIyTVtGeRKg6GTpzzfE+KYFhHMEUCIQDoHGQacPXpYkm05HM8sz0j0R+kxcahn8CrcneHb1kBXQIgHLaK9FhXVId9yPmvl1NF0K7yoOg9ypGvwJatsGHu0w8=";
-const HEADER_WITH_VARIOUS_TYPES: &str = "haViY3RkanNvbmNpbnQYKmRib29s9WRudWxs9mZzdHJpbmdqaGVsbG8gdGVzdExUZXN0IG1lc3NhZ2UA9vY=";
+const HEADER_WITH_VARIOUS_TYPES: &str =
+    "haViY3RkanNvbmNpbnQYKmRib29s9WRudWxs9mZzdHJpbmdqaGVsbG8gdGVzdExUZXN0IG1lc3NhZ2UA9vY=";
 
 /// CBOR -> Bottle -> JSON -> Bottle -> CBOR must preserve all fields.
 fn assert_cbor_json_cbor(name: &str, cbor_b64: &str) {

@@ -49,7 +49,9 @@ const CHLOE_TO_DANIEL_ENCRYPTED: &str = "haBY6YWgWEbOz5dzuHVoDJGbbegel6QHqyxa7U7
 #[test]
 fn open_alice_signed_cleartext() {
     let opener = Opener::empty();
-    let (msg, info) = opener.open_cbor(&b64(ALICE_SIGNED_CLEARTEXT)).expect("open");
+    let (msg, info) = opener
+        .open_cbor(&b64(ALICE_SIGNED_CLEARTEXT))
+        .expect("open");
     assert_eq!(msg, b"Hello from Alice!");
     assert_eq!(info.signatures.len(), 1, "alice ECDSA signature verified");
     assert_eq!(info.decryption, 0);
@@ -58,7 +60,9 @@ fn open_alice_signed_cleartext() {
 #[test]
 fn open_chloe_signed_cleartext() {
     let opener = Opener::empty();
-    let (msg, info) = opener.open_cbor(&b64(CHLOE_SIGNED_CLEARTEXT)).expect("open");
+    let (msg, info) = opener
+        .open_cbor(&b64(CHLOE_SIGNED_CLEARTEXT))
+        .expect("open");
     assert_eq!(msg, b"Hello from Chloe!");
     assert_eq!(info.signatures.len(), 1, "chloe Ed25519 signature verified");
 }
@@ -67,10 +71,16 @@ fn open_chloe_signed_cleartext() {
 fn decrypt_alice_to_bob() {
     let kc = Keychain::from_keys([ec_p256(BOB)]).unwrap();
     let opener = Opener::new(kc);
-    let (msg, info) = opener.open_cbor(&b64(ALICE_TO_BOB_ENCRYPTED)).expect("open");
+    let (msg, info) = opener
+        .open_cbor(&b64(ALICE_TO_BOB_ENCRYPTED))
+        .expect("open");
     assert_eq!(msg, b"Secret message from Alice to Bob");
     assert_eq!(info.decryption, 1, "one ECDH decryption performed");
-    assert_eq!(info.signatures.len(), 1, "alice signed the encrypted bottle");
+    assert_eq!(
+        info.signatures.len(),
+        1,
+        "alice signed the encrypted bottle"
+    );
 }
 
 #[test]

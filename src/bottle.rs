@@ -82,7 +82,9 @@ impl MessageRecipient {
     fn from_value(v: &Value) -> Result<Self> {
         let a = cbor::as_array(v)?;
         if a.len() != 3 {
-            return Err(BottleError::Malformed("recipient must have 3 fields".into()));
+            return Err(BottleError::Malformed(
+                "recipient must have 3 fields".into(),
+            ));
         }
         Ok(MessageRecipient {
             typ: cbor::as_i64(&a[0])?,
@@ -115,7 +117,9 @@ impl MessageSignature {
     fn from_value(v: &Value) -> Result<Self> {
         let a = cbor::as_array(v)?;
         if a.len() != 3 {
-            return Err(BottleError::Malformed("signature must have 3 fields".into()));
+            return Err(BottleError::Malformed(
+                "signature must have 3 fields".into(),
+            ));
         }
         Ok(MessageSignature {
             typ: cbor::as_i64(&a[0])?,
@@ -255,7 +259,11 @@ impl Bottle {
                     .map(MessageRecipient::from_value)
                     .collect::<Result<Vec<_>>>()?,
             ),
-            _ => return Err(BottleError::Malformed("recipients must be array or null".into())),
+            _ => {
+                return Err(BottleError::Malformed(
+                    "recipients must be array or null".into(),
+                ));
+            }
         };
         let signatures = match &a[4] {
             Value::Null => None,
@@ -265,7 +273,11 @@ impl Bottle {
                     .map(MessageSignature::from_value)
                     .collect::<Result<Vec<_>>>()?,
             ),
-            _ => return Err(BottleError::Malformed("signatures must be array or null".into())),
+            _ => {
+                return Err(BottleError::Malformed(
+                    "signatures must be array or null".into(),
+                ));
+            }
         };
 
         Ok(Bottle {
@@ -318,6 +330,10 @@ impl Bottle {
     /// Returns true if this is a clean (unsigned) bottle wrapping another bottle.
     pub fn is_clean_bottle(&self) -> bool {
         self.format == MessageFormat::CborBottle
-            && self.signatures.as_ref().map(|s| s.is_empty()).unwrap_or(true)
+            && self
+                .signatures
+                .as_ref()
+                .map(|s| s.is_empty())
+                .unwrap_or(true)
     }
 }

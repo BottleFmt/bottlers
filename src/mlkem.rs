@@ -91,7 +91,11 @@ impl MlKemPrivate {
             }
         };
         let x25519 = hybrid.then(|| X25519PrivateKey::generate(&mut OsRng));
-        MlKemPrivate { variant, dk, x25519 }
+        MlKemPrivate {
+            variant,
+            dk,
+            x25519,
+        }
     }
 
     /// Returns the matching public key.
@@ -264,9 +268,8 @@ pub fn marshal_spki(key: &MlKemPublic) -> Result<Vec<u8>> {
             MlKemVariant::V1024 => OID_COMPOSITE_1024_X25519,
         };
         // composite = SEQUENCE { BITSTRING x25519, BITSTRING mlkem }
-        let composite = encode_sequence(
-            &[encode_bit_string(x), encode_bit_string(&key.ek_bytes())].concat(),
-        );
+        let composite =
+            encode_sequence(&[encode_bit_string(x), encode_bit_string(&key.ek_bytes())].concat());
         let algid = encode_sequence(&oid_tlv(oid));
         Ok(encode_sequence(
             &[algid, encode_bit_string(&composite)].concat(),
@@ -306,7 +309,11 @@ pub fn try_parse(alg_oid: &[u64], key_bytes: &[u8]) -> Result<Option<MlKemPublic
     };
 
     let ek = make_encaps(variant, &ek_bytes)?;
-    Ok(Some(MlKemPublic { variant, ek, x25519 }))
+    Ok(Some(MlKemPublic {
+        variant,
+        ek,
+        x25519,
+    }))
 }
 
 fn make_encaps(variant: MlKemVariant, bytes: &[u8]) -> Result<Encaps> {
@@ -338,7 +345,9 @@ fn parse_composite(data: &[u8]) -> Result<([u8; 32], Vec<u8>)> {
     }
     let x_bytes = &b1[1..];
     if x_bytes.len() != 32 {
-        return Err(BottleError::Pkix("X25519 component must be 32 bytes".into()));
+        return Err(BottleError::Pkix(
+            "X25519 component must be 32 bytes".into(),
+        ));
     }
     let mut x = [0u8; 32];
     x.copy_from_slice(x_bytes);

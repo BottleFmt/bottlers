@@ -176,7 +176,11 @@ impl IDCard {
         };
         let groups = match &self.groups {
             None => Value::Null,
-            Some(v) => Value::Array(v.iter().map(crate::membership::Membership::to_value).collect()),
+            Some(v) => Value::Array(
+                v.iter()
+                    .map(crate::membership::Membership::to_value)
+                    .collect(),
+            ),
         };
         let meta = match &self.meta {
             None => Value::Null,
@@ -187,7 +191,10 @@ impl IDCard {
             ),
         };
         cbor::canonical_map(vec![
-            (Value::Integer(1.into()), Value::Bytes(self.self_key.clone())),
+            (
+                Value::Integer(1.into()),
+                Value::Bytes(self.self_key.clone()),
+            ),
             (Value::Integer(2.into()), Value::Integer(self.issued.into())),
             (
                 Value::Integer(3.into()),
@@ -260,7 +267,8 @@ impl IDCard {
 
     /// Signs the IDCard, returning a CBOR-encoded signed [`Bottle`] containing it.
     pub fn sign(&self, key: &PrivateKey) -> Result<Vec<u8>> {
-        let mut bottle = Bottle::new(self.to_cbor()?).with_header("ct", Value::Text("idcard".into()));
+        let mut bottle =
+            Bottle::new(self.to_cbor()?).with_header("ct", Value::Text("idcard".into()));
         bottle.bottle_up()?;
         bottle.sign(key)?;
         bottle.to_cbor()

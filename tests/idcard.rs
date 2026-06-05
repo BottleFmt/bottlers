@@ -50,7 +50,11 @@ fn idcard_vectors_roundtrip_and_verify() {
     let multi = assert_idcard_vector("idcardMultipleKeys", IDCARD_MULTIPLE_KEYS);
     assert_eq!(multi.subkeys.len(), 2);
     assert_eq!(
-        multi.meta.as_ref().and_then(|m| m.get("name")).map(String::as_str),
+        multi
+            .meta
+            .as_ref()
+            .and_then(|m| m.get("name"))
+            .map(String::as_str),
         Some("Alice")
     );
 
@@ -91,7 +95,10 @@ fn membership_sign_and_verify() {
     let subject_pkix = subject.public_pkix().unwrap();
 
     let mut m = Membership::new(subject_pkix.clone(), group_pkix.clone(), 1_700_000_000);
-    m.info.as_mut().unwrap().insert("name".into(), "Carol".into());
+    m.info
+        .as_mut()
+        .unwrap()
+        .insert("name".into(), "Carol".into());
     m.sign(&group).unwrap();
 
     // Self-signed verification (sign key == group key).

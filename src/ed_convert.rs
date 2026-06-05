@@ -47,8 +47,9 @@ pub fn ed25519_public_to_x25519(ed_pub: &[u8; 32]) -> Result<[u8; 32]> {
     let num = mont.add_mod(&one, &y);
     let den = mont.sub_mod(&one, &y);
 
-    let den_inv = inv_mod_boxed(&den, &modulus)
-        .ok_or_else(|| BottleError::Crypto("non-invertible (1 - y) in ed25519 conversion".into()))?;
+    let den_inv = inv_mod_boxed(&den, &modulus).ok_or_else(|| {
+        BottleError::Crypto("non-invertible (1 - y) in ed25519 conversion".into())
+    })?;
     let u = mont.mul_mod(&num, &den_inv);
 
     let u_be = u.to_be_bytes(32);

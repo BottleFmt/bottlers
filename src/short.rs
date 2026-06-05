@@ -23,7 +23,9 @@ pub fn encrypt_short(k: &[u8], recipient: &PublicKey) -> Result<Vec<u8>> {
         }
         PublicKey::X25519(u) => ecdh::encrypt_x25519(k, u),
         PublicKey::MlKem(pk) => crate::mlkem::encrypt(k, pk),
-        _ => Err(BottleError::UnsupportedKey("key cannot be an encryption recipient")),
+        _ => Err(BottleError::UnsupportedKey(
+            "key cannot be an encryption recipient",
+        )),
     }
 }
 

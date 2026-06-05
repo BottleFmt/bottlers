@@ -12,16 +12,15 @@ use ciborium::value::Value;
 /// Encodes a single CBOR [`Value`] to bytes.
 pub fn to_vec(value: &Value) -> Result<Vec<u8>> {
     let mut buf = Vec::new();
-    ciborium::ser::into_writer(value, &mut buf)
-        .map_err(|e| BottleError::Cbor(format!("{e:?}")))?;
+    ciborium::ser::into_writer(value, &mut buf).map_err(|e| BottleError::Cbor(format!("{e:?}")))?;
     Ok(buf)
 }
 
 /// Decodes a single CBOR [`Value`] from bytes, rejecting trailing data.
 pub fn from_slice(data: &[u8]) -> Result<Value> {
     let mut reader = data;
-    let v: Value = ciborium::de::from_reader(&mut reader)
-        .map_err(|e| BottleError::Cbor(format!("{e:?}")))?;
+    let v: Value =
+        ciborium::de::from_reader(&mut reader).map_err(|e| BottleError::Cbor(format!("{e:?}")))?;
     Ok(v)
 }
 

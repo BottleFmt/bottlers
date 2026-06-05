@@ -37,7 +37,11 @@ pub(crate) fn marshal_spki(key: &PublicKey) -> Option<Vec<u8>> {
 /// Attempts to parse an ML-DSA / SLH-DSA public key from its algorithm OID and
 /// raw key bytes (plus the full DER for SLH-DSA). Returns `Ok(None)` if the OID
 /// is not a PQ-signature OID.
-pub(crate) fn try_parse(alg_oid: &[u64], key_bytes: &[u8], der: &[u8]) -> Result<Option<PublicKey>> {
+pub(crate) fn try_parse(
+    alg_oid: &[u64],
+    key_bytes: &[u8],
+    der: &[u8],
+) -> Result<Option<PublicKey>> {
     if alg_oid == OID_MLDSA_44 {
         let k = MlDsa44PublicKey::from_bytes(key_bytes)
             .map_err(|e| BottleError::Pkix(format!("ML-DSA-44: {e:?}")))?;
@@ -54,7 +58,9 @@ pub(crate) fn try_parse(alg_oid: &[u64], key_bytes: &[u8], der: &[u8]) -> Result
         return Ok(Some(PublicKey::MlDsa87(k)));
     }
     // SLH-DSA OIDs are 2.16.840.1.101.3.4.3.{20..=31}.
-    if alg_oid.len() == 9 && alg_oid[..8] == [2, 16, 840, 1, 101, 3, 4, 3] && (20..=31).contains(&alg_oid[8])
+    if alg_oid.len() == 9
+        && alg_oid[..8] == [2, 16, 840, 1, 101, 3, 4, 3]
+        && (20..=31).contains(&alg_oid[8])
     {
         let set = slhdsa::ParamSet::from_oid(alg_oid)
             .ok_or_else(|| BottleError::Pkix("unknown SLH-DSA parameter set".into()))?;

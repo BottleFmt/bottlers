@@ -63,7 +63,9 @@ pub fn encrypt_x25519(data: &[u8], peer_u: &[u8; 32]) -> Result<Vec<u8>> {
 /// Decrypts an ECDH envelope using the recipient's private key.
 pub fn decrypt(data: &[u8], recipient: &PrivateKey) -> Result<Vec<u8>> {
     if data.is_empty() || data[0] != 0 {
-        return Err(BottleError::Malformed("unsupported ECDH message version".into()));
+        return Err(BottleError::Malformed(
+            "unsupported ECDH message version".into(),
+        ));
     }
     let (len, consumed) = read_uvarint(&data[1..])?;
     let off = 1 + consumed;
@@ -93,7 +95,11 @@ pub fn decrypt(data: &[u8], recipient: &PrivateKey) -> Result<Vec<u8>> {
             x.diffie_hellman(eph_u)
                 .map_err(|e| BottleError::Crypto(format!("X25519: {e:?}")))?
         }
-        _ => return Err(BottleError::UnsupportedKey("recipient/ephemeral curve mismatch")),
+        _ => {
+            return Err(BottleError::UnsupportedKey(
+                "recipient/ephemeral curve mismatch",
+            ));
+        }
     };
 
     let key = sha256(&secret);

@@ -54,9 +54,7 @@ pub fn parse_public_key(der: &[u8]) -> Result<PublicKey> {
         return Ok(pk);
     }
 
-    match AnyPublicKey::from_spki_der(der)
-        .map_err(|e| BottleError::Pkix(format!("{e:?}")))?
-    {
+    match AnyPublicKey::from_spki_der(der).map_err(|e| BottleError::Pkix(format!("{e:?}")))? {
         AnyPublicKey::Rsa(k) => Ok(PublicKey::Rsa(k)),
         AnyPublicKey::Ecdsa(k) => Ok(PublicKey::Ecdsa(k)),
         AnyPublicKey::Ed25519(k) => Ok(PublicKey::Ed25519(k)),
@@ -121,11 +119,15 @@ pub(crate) fn parse_spki(der: &[u8]) -> Result<(Vec<u64>, Vec<u8>)> {
     }
     let (alg_tag, alg_body, after_alg) = read_tlv(body)?;
     if alg_tag != 0x30 {
-        return Err(BottleError::Pkix("AlgorithmIdentifier must be a SEQUENCE".into()));
+        return Err(BottleError::Pkix(
+            "AlgorithmIdentifier must be a SEQUENCE".into(),
+        ));
     }
     let (oid_tag, oid_body, _) = read_tlv(alg_body)?;
     if oid_tag != 0x06 {
-        return Err(BottleError::Pkix("expected OID in AlgorithmIdentifier".into()));
+        return Err(BottleError::Pkix(
+            "expected OID in AlgorithmIdentifier".into(),
+        ));
     }
     let oid = decode_oid(oid_body)?;
 

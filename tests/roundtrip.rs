@@ -56,7 +56,8 @@ fn multi_recipient_encrypt() {
     let bob = gen_ed25519();
     let carol = gen_x25519();
     let mut b = Bottle::new(b"group secret".to_vec());
-    b.encrypt(&[alice.public(), bob.public(), carol.public()]).unwrap();
+    b.encrypt(&[alice.public(), bob.public(), carol.public()])
+        .unwrap();
 
     assert_eq!(open_with(alice, &b), b"group secret");
     assert_eq!(open_with(bob, &b), b"group secret");
