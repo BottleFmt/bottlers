@@ -14,6 +14,9 @@ use crate::key::{PrivateKey, PublicKey};
 
 /// Signs `msg` with `key`, returning the bottle signature bytes.
 pub fn sign(key: &PrivateKey, msg: &[u8]) -> Result<Vec<u8>> {
+    if let Some(res) = crate::pqsig::sign(key, msg) {
+        return res;
+    }
     match key {
         PrivateKey::Rsa(k) => k
             .sign_pkcs1v15::<Sha256>(msg)
@@ -25,20 +28,24 @@ pub fn sign(key: &PrivateKey, msg: &[u8]) -> Result<Vec<u8>> {
             Ok(sig.to_der())
         }
         PrivateKey::Ed25519(k) => Ok(k.sign(msg).to_bytes().to_vec()),
-        PrivateKey::X25519(_) => Err(BottleError::UnsupportedKey("X25519 cannot sign")),
+        // X25519 cannot sign; ML-DSA / SLH-DSA were handled above.
+        _ => Err(BottleError::UnsupportedKey("key cannot sign")),
     }
 }
 
 /// Verifies `sig` over `msg` against the public key, returning
 /// [`BottleError::VerifyFailed`] on mismatch.
 pub fn verify(pubkey: &PublicKey, msg: &[u8], sig: &[u8]) -> Result<()> {
+    if let Some(res) = crate::pqsig::verify(pubkey, msg, sig) {
+        return res;
+    }
     let result = match pubkey {
         PublicKey::Rsa(k) => AnyPublicKey::Rsa(k.clone()).verify(oid::SHA256_WITH_RSA, msg, sig),
         PublicKey::Ecdsa(k) => {
             AnyPublicKey::Ecdsa(k.clone()).verify(oid::ECDSA_WITH_SHA256, msg, sig)
         }
         PublicKey::Ed25519(k) => AnyPublicKey::Ed25519(k.clone()).verify(oid::ID_ED25519, msg, sig),
-        PublicKey::X25519(_) => return Err(BottleError::UnsupportedKey("X25519 cannot verify")),
+        _ => return Err(BottleError::UnsupportedKey("key cannot verify")),
     };
     result.map_err(|_| BottleError::VerifyFailed)
 }

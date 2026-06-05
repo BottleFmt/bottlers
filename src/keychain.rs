@@ -22,7 +22,7 @@ impl Keychain {
     /// signing-capable key added becomes the default signer.
     pub fn add_key(&mut self, key: PrivateKey) -> Result<()> {
         let pkix = key.public_pkix()?;
-        let can_sign = !matches!(key, PrivateKey::X25519(_));
+        let can_sign = key.can_sign();
         if can_sign && self.sign_key.is_none() {
             self.sign_key = Some(pkix.clone());
         }

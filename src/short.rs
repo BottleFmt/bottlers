@@ -22,6 +22,8 @@ pub fn encrypt_short(k: &[u8], recipient: &PublicKey) -> Result<Vec<u8>> {
             ecdh::encrypt_x25519(k, &u)
         }
         PublicKey::X25519(u) => ecdh::encrypt_x25519(k, u),
+        PublicKey::MlKem(pk) => crate::mlkem::encrypt(k, pk),
+        _ => Err(BottleError::UnsupportedKey("key cannot be an encryption recipient")),
     }
 }
 
@@ -31,6 +33,7 @@ pub fn decrypt_short(data: &[u8], recipient: &PrivateKey) -> Result<Vec<u8>> {
         PrivateKey::Rsa(sk) => sk
             .decrypt_oaep::<Sha256>(data, &[])
             .map_err(|e| BottleError::Crypto(format!("RSA-OAEP: {e:?}"))),
+        PrivateKey::MlKem(sk) => crate::mlkem::decrypt(data, sk),
         // ECDSA (P-256), Ed25519, and X25519 all use the ECDH envelope.
         _ => ecdh::decrypt(data, recipient),
     }

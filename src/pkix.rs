@@ -26,6 +26,12 @@ pub fn marshal_public_key(key: &PublicKey) -> Result<Vec<u8>> {
             body.extend_from_slice(&bits);
             Ok(encode_sequence(&body))
         }
+        PublicKey::MlKem(k) => crate::mlkem::marshal_spki(k),
+        PublicKey::MlDsa44(_)
+        | PublicKey::MlDsa65(_)
+        | PublicKey::MlDsa87(_)
+        | PublicKey::SlhDsa(_) => crate::pqsig::marshal_spki(key)
+            .ok_or_else(|| BottleError::UnsupportedKey("PQ marshal")),
     }
 }
 
@@ -61,7 +67,7 @@ pub fn parse_public_key(der: &[u8]) -> Result<PublicKey> {
 
 /// Reads a definite-length DER TLV from `data`, returning (tag, content,
 /// remaining).
-fn read_tlv(data: &[u8]) -> Result<(u8, &[u8], &[u8])> {
+pub(crate) fn read_tlv(data: &[u8]) -> Result<(u8, &[u8], &[u8])> {
     if data.len() < 2 {
         return Err(BottleError::Pkix("truncated DER".into()));
     }
