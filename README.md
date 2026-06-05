@@ -1,5 +1,10 @@
 # bottlers
 
+[![crates.io](https://img.shields.io/crates/v/bottlers.svg)](https://crates.io/crates/bottlers)
+[![docs.rs](https://img.shields.io/docsrs/bottlers)](https://docs.rs/bottlers)
+[![CI](https://github.com/BottleFmt/bottlers/actions/workflows/ci.yml/badge.svg)](https://github.com/BottleFmt/bottlers/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 A Rust implementation of the [Bottle](https://github.com/BottleFmt) secure-container
 protocol, built entirely on the [`purecrypto`](https://github.com/KarpelesLab/purecrypto)
 toolkit — no foreign crypto code.
