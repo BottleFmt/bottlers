@@ -294,7 +294,7 @@ fn as_int_map(v: &Value) -> Result<BTreeMap<i64, Value>> {
     }
 }
 
-fn get<'a>(map: &'a BTreeMap<i64, Value>, key: i64) -> Result<&'a Value> {
+fn get(map: &BTreeMap<i64, Value>, key: i64) -> Result<&Value> {
     map.get(&key)
         .ok_or_else(|| BottleError::Malformed(format!("missing map key {key}")))
 }

@@ -44,7 +44,7 @@ pub fn verify(pubkey: &PublicKey, msg: &[u8], sig: &[u8]) -> Result<()> {
         PublicKey::Ecdsa(k) => {
             AnyPublicKey::Ecdsa(k.clone()).verify(oid::ECDSA_WITH_SHA256, msg, sig)
         }
-        PublicKey::Ed25519(k) => AnyPublicKey::Ed25519(k.clone()).verify(oid::ID_ED25519, msg, sig),
+        PublicKey::Ed25519(k) => AnyPublicKey::Ed25519(*k).verify(oid::ID_ED25519, msg, sig),
         _ => return Err(BottleError::UnsupportedKey("key cannot verify")),
     };
     result.map_err(|_| BottleError::VerifyFailed)

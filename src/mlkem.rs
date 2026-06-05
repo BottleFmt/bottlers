@@ -32,11 +32,13 @@ pub enum MlKemVariant {
 }
 
 #[derive(Clone)]
+#[allow(clippy::large_enum_variant)]
 enum Encaps {
     K768(MlKem768EncapsKey),
     K1024(MlKem1024EncapsKey),
 }
 
+#[allow(clippy::large_enum_variant)]
 enum Decaps {
     K768(MlKem768DecapsKey),
     K1024(MlKem1024DecapsKey),

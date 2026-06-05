@@ -20,6 +20,7 @@ use crate::mlkem::{MlKemPrivate, MlKemPublic};
 
 /// A public key understood by bottlers.
 #[derive(Clone)]
+#[allow(clippy::large_enum_variant)]
 pub enum PublicKey {
     /// An RSA public key.
     Rsa(BoxedRsaPublicKey),
@@ -42,6 +43,7 @@ pub enum PublicKey {
 }
 
 /// A private key understood by bottlers.
+#[allow(clippy::large_enum_variant)]
 pub enum PrivateKey {
     /// An RSA private key.
     Rsa(BoxedRsaPrivateKey),

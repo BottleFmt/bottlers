@@ -104,6 +104,11 @@ impl Opener {
         self.open(Bottle::from_cbor(data)?)
     }
 
+    /// Opens a JSON-encoded bottle.
+    pub fn open_json(&self, data: &[u8]) -> Result<(Vec<u8>, OpenResult)> {
+        self.open(Bottle::from_json(data)?)
+    }
+
     /// Tries each recipient slot against the keychain, returning the 32-byte
     /// content key on the first success.
     fn recover_content_key(&self, bottle: &Bottle) -> Result<[u8; 32]> {

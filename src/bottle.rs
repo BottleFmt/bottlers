@@ -282,6 +282,16 @@ impl Bottle {
         Self::from_value(&cbor::from_slice(data)?)
     }
 
+    /// Encodes this bottle as JSON (draft §7).
+    pub fn to_json(&self) -> Result<Vec<u8>> {
+        crate::json::bottle_to_json(self)
+    }
+
+    /// Decodes a [`Bottle`] from JSON.
+    pub fn from_json(data: &[u8]) -> Result<Self> {
+        crate::json::bottle_from_json(data)
+    }
+
     // --- structural operations ------------------------------------------
 
     /// Encodes the current bottle into itself, allowing extra layers to be

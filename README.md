@@ -11,14 +11,20 @@ implementation (`gobottle`) and the other BottleFmt libraries.
 
 ## Status
 
+Full feature parity with the Go reference (`gobottle`).
+
 | Area | State |
 |------|-------|
 | CBOR wire format (byte-exact, validated against gobottle interop vectors) | ✅ |
+| JSON encoding (base64url, validated against the spec / pybottle) | ✅ |
 | Encrypt / sign / open, Keychain, Opener | ✅ |
 | RSA, ECDSA (P-256), Ed25519, X25519 (+ Ed25519→X25519) | ✅ |
-| Post-quantum: ML-KEM (+hybrid), ML-DSA, SLH-DSA | 🚧 |
-| IDCard / Membership | 🚧 |
-| JSON encoding | 🚧 |
+| Post-quantum: ML-KEM (+ X25519 hybrid), ML-DSA, SLH-DSA | ✅ |
+| IDCard / SubKey / Membership | ✅ |
+
+Cross-implementation interop is verified by tests that decrypt gobottle-produced
+ECDH and Ed25519→X25519 ciphertexts, verify its ECDSA/Ed25519 signatures, and
+re-encode its CBOR Bottle and IDCard vectors byte-for-byte.
 
 ## Example
 

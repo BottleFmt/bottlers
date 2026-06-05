@@ -18,7 +18,7 @@ pub fn marshal_public_key(key: &PublicKey) -> Result<Vec<u8>> {
     match key {
         PublicKey::Rsa(k) => Ok(AnyPublicKey::Rsa(k.clone()).to_spki_der()),
         PublicKey::Ecdsa(k) => Ok(AnyPublicKey::Ecdsa(k.clone()).to_spki_der()),
-        PublicKey::Ed25519(k) => Ok(AnyPublicKey::Ed25519(k.clone()).to_spki_der()),
+        PublicKey::Ed25519(k) => Ok(AnyPublicKey::Ed25519(*k).to_spki_der()),
         PublicKey::X25519(u) => {
             let algid = encode_sequence(&oid_tlv(OID_X25519));
             let bits = encode_bit_string(u);
@@ -30,8 +30,9 @@ pub fn marshal_public_key(key: &PublicKey) -> Result<Vec<u8>> {
         PublicKey::MlDsa44(_)
         | PublicKey::MlDsa65(_)
         | PublicKey::MlDsa87(_)
-        | PublicKey::SlhDsa(_) => crate::pqsig::marshal_spki(key)
-            .ok_or_else(|| BottleError::UnsupportedKey("PQ marshal")),
+        | PublicKey::SlhDsa(_) => {
+            crate::pqsig::marshal_spki(key).ok_or(BottleError::UnsupportedKey("PQ marshal"))
+        }
     }
 }
 
@@ -81,8 +82,8 @@ pub(crate) fn read_tlv(data: &[u8]) -> Result<(u8, &[u8], &[u8])> {
             return Err(BottleError::Pkix("bad DER length".into()));
         }
         let mut len = 0usize;
-        for &b in &data[2..2 + n] {
-            len = (len << 8) | b as usize;
+        for &byte in &data[2..2 + n] {
+            len = (len << 8) | byte as usize;
         }
         (len, 2 + n)
     };
