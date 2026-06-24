@@ -14,6 +14,7 @@ use purecrypto::mldsa::{
 };
 use purecrypto::rsa::{BoxedRsaPrivateKey, BoxedRsaPublicKey};
 use purecrypto::slhdsa;
+use purecrypto::x509::{AnyPrivateKey, Pkcs8ReadOptions};
 
 use crate::error::{BottleError, Result};
 use crate::mlkem::{MlKemPrivate, MlKemPublic};
@@ -111,4 +112,73 @@ impl PrivateKey {
     pub fn public_pkix(&self) -> Result<Vec<u8>> {
         crate::pkix::marshal_public_key(&self.public())
     }
+
+    /// Serializes this key for keychain storage, returning an entry-kind
+    /// discriminator and its payload.
+    ///
+    /// Kind [`ENTRY_PKCS8`] is a standard PKCS#8 `PrivateKeyInfo` (decoded on
+    /// the way back via purecrypto's unified [`AnyPrivateKey`]). Kind
+    /// [`ENTRY_ECDSA_P256`] is a bare P-256 scalar — bottlers keeps ECDSA in
+    /// its concrete P-256 form, which `AnyPrivateKey` cannot hand back. Kind
+    /// [`ENTRY_MLKEM`] is bottlers' own ML-KEM framing: the X25519-hybrid form
+    /// has no standard PKCS#8 OID, so it cannot ride the unified path either.
+    pub(crate) fn to_entry(&self) -> Result<(u8, Vec<u8>)> {
+        Ok(match self {
+            PrivateKey::Rsa(k) => (ENTRY_PKCS8, k.to_pkcs8_der()),
+            PrivateKey::Ecdsa(k) => (ENTRY_ECDSA_P256, k.to_bytes().to_vec()),
+            PrivateKey::Ed25519(k) => (ENTRY_PKCS8, k.to_pkcs8_der()),
+            PrivateKey::X25519(k) => (ENTRY_PKCS8, k.to_pkcs8_der()),
+            PrivateKey::MlDsa44(k) => (ENTRY_PKCS8, k.to_pkcs8_der()),
+            PrivateKey::MlDsa65(k) => (ENTRY_PKCS8, k.to_pkcs8_der()),
+            PrivateKey::MlDsa87(k) => (ENTRY_PKCS8, k.to_pkcs8_der()),
+            PrivateKey::SlhDsa(k) => (ENTRY_PKCS8, k.to_pkcs8_der()),
+            PrivateKey::MlKem(k) => (ENTRY_MLKEM, k.to_key_bytes()),
+        })
+    }
+
+    /// Reconstructs a key from an entry produced by [`to_entry`](Self::to_entry).
+    pub(crate) fn from_entry(kind: u8, data: &[u8]) -> Result<Self> {
+        match kind {
+            ENTRY_PKCS8 => {
+                let any = AnyPrivateKey::from_pkcs8_der(data, Pkcs8ReadOptions::new())
+                    .map_err(|e| BottleError::Pkix(format!("{e:?}")))?;
+                PrivateKey::from_any(any)
+            }
+            ENTRY_ECDSA_P256 => {
+                let arr: [u8; 32] = data
+                    .try_into()
+                    .map_err(|_| BottleError::Malformed("bad P-256 scalar length".into()))?;
+                Ok(PrivateKey::Ecdsa(
+                    EcdsaPrivateKey::from_bytes(&arr)
+                        .map_err(|e| BottleError::Crypto(format!("{e:?}")))?,
+                ))
+            }
+            ENTRY_MLKEM => Ok(PrivateKey::MlKem(MlKemPrivate::from_key_bytes(data)?)),
+            _ => Err(BottleError::Malformed(format!(
+                "unknown keychain entry kind {kind}"
+            ))),
+        }
+    }
+
+    /// Maps a unified [`AnyPrivateKey`] onto the subset of key types bottlers
+    /// supports. (ECDSA never arrives here — it uses [`ENTRY_ECDSA_P256`].)
+    fn from_any(any: AnyPrivateKey) -> Result<Self> {
+        Ok(match any {
+            AnyPrivateKey::Rsa(k) => PrivateKey::Rsa(k),
+            AnyPrivateKey::Ed25519(k) => PrivateKey::Ed25519(k),
+            AnyPrivateKey::X25519(k) => PrivateKey::X25519(k),
+            AnyPrivateKey::MlDsa44(k) => PrivateKey::MlDsa44(k),
+            AnyPrivateKey::MlDsa65(k) => PrivateKey::MlDsa65(k),
+            AnyPrivateKey::MlDsa87(k) => PrivateKey::MlDsa87(k),
+            AnyPrivateKey::SlhDsa(k) => PrivateKey::SlhDsa(k),
+            _ => return Err(BottleError::UnsupportedKey("key type unsupported by bottlers")),
+        })
+    }
 }
+
+/// Keychain entry kind: a standard PKCS#8 `PrivateKeyInfo`.
+pub(crate) const ENTRY_PKCS8: u8 = 0;
+/// Keychain entry kind: bottlers' ML-KEM framing (pure or X25519-hybrid).
+pub(crate) const ENTRY_MLKEM: u8 = 1;
+/// Keychain entry kind: a bare 32-byte P-256 ECDSA scalar.
+pub(crate) const ENTRY_ECDSA_P256: u8 = 2;

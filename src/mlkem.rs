@@ -110,6 +110,65 @@ impl MlKemPrivate {
             x25519: self.x25519.as_ref().map(|x| x.public_key()),
         }
     }
+
+    /// Serializes the private key to a self-describing byte string for keychain
+    /// storage. There is no standard PKCS#8 OID for the X25519-hybrid form, so
+    /// bottlers uses its own framing: `variant || hybrid || decaps_bytes ||
+    /// x25519_scalar?` (the trailing 32-byte X25519 scalar is present only when
+    /// `hybrid == 1`).
+    pub(crate) fn to_key_bytes(&self) -> Vec<u8> {
+        let mut out = Vec::new();
+        out.push(match self.variant {
+            MlKemVariant::V768 => 0,
+            MlKemVariant::V1024 => 1,
+        });
+        out.push(self.x25519.is_some() as u8);
+        match &self.dk {
+            Decaps::K768(d) => out.extend_from_slice(&d.to_bytes()),
+            Decaps::K1024(d) => out.extend_from_slice(&d.to_bytes()),
+        }
+        if let Some(x) = &self.x25519 {
+            out.extend_from_slice(&x.to_bytes());
+        }
+        out
+    }
+
+    /// Reconstructs a private key from [`to_key_bytes`](Self::to_key_bytes).
+    pub(crate) fn from_key_bytes(data: &[u8]) -> Result<Self> {
+        let &[variant_tag, hybrid_tag, ref body @ ..] = data else {
+            return Err(BottleError::Malformed("ml-kem key too short".into()));
+        };
+        let variant = match variant_tag {
+            0 => MlKemVariant::V768,
+            1 => MlKemVariant::V1024,
+            _ => return Err(BottleError::Malformed("unknown ml-kem variant".into())),
+        };
+        let x_len = if hybrid_tag != 0 { 32 } else { 0 };
+        let dk_len = body
+            .len()
+            .checked_sub(x_len)
+            .ok_or_else(|| BottleError::Malformed("ml-kem key length mismatch".into()))?;
+        let (dk_bytes, x_bytes) = body.split_at(dk_len);
+        let bad = |_| BottleError::Malformed("ml-kem key length mismatch".into());
+        let dk = match variant {
+            MlKemVariant::V768 => Decaps::K768(MlKem768DecapsKey::from_bytes(
+                dk_bytes.try_into().map_err(bad)?,
+            )),
+            MlKemVariant::V1024 => Decaps::K1024(MlKem1024DecapsKey::from_bytes(
+                dk_bytes.try_into().map_err(bad)?,
+            )),
+        };
+        let x25519 = if hybrid_tag != 0 {
+            Some(X25519PrivateKey::from_bytes(x_bytes.try_into().map_err(bad)?))
+        } else {
+            None
+        };
+        Ok(MlKemPrivate {
+            variant,
+            dk,
+            x25519,
+        })
+    }
 }
 
 /// Encrypts the content key for an ML-KEM recipient.
