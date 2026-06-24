@@ -1,6 +1,6 @@
 [package]
 name = "bottlers"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 rust-version = "1.95"
 description = "Rust implementation of the Bottle secure-container protocol, built on the purecrypto crate"
